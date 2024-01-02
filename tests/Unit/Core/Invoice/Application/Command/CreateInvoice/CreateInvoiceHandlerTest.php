@@ -38,6 +38,7 @@ class CreateInvoiceHandlerTest extends TestCase
     public function test_handle_success(): void
     {
         $user = $this->createMock(User::class);
+        $user->method('isActive')->willReturn(true);
 
         $invoice = new Invoice(
             $user, 12500
@@ -73,5 +74,19 @@ class CreateInvoiceHandlerTest extends TestCase
         $this->expectException(InvoiceException::class);
 
         $this->handler->__invoke((new CreateInvoiceCommand('test@test.pl', -5)));
+    }
+
+    public function test_handle_invoice_for_inactive_user(): void
+    {
+        $this->expectException(InvoiceException::class);
+
+        $user = $this->createMock(User::class);
+        $user->method('isActive')->willReturn(false);
+
+        $this->userRepository->expects(self::once())
+            ->method('getByEmail')
+            ->willReturn($user);
+
+        $this->handler->__invoke((new CreateInvoiceCommand('test@test.pl', 12500)));
     }
 }
